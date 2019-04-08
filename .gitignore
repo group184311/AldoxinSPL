@@ -1,0 +1,11 @@
+.settings/
+CMSIS/
+Debug/
+StdPeriph_Driver/
+inc/
+startup/
+StdPeriph_Driver/
+*.cproject
+*.project
+*LinkerScript.ld
+*Aldokhin_stm32f103c8t6.xml
