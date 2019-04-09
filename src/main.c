@@ -90,40 +90,83 @@ void TIM3_IRQHandler(void)
 void led_init(void)
 {
 //  Включаем тактирование порта C
-	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+//	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 //  сброс состояния порта С pin 13
-	GPIOC->CRH &= ~(GPIO_CRH_CNF13_1 | GPIO_CRH_CNF13_0 | GPIO_CRH_MODE13_1 | GPIO_CRH_MODE13_0);
+//	GPIOC->CRH &= ~(GPIO_CRH_CNF13_1 | GPIO_CRH_CNF13_0 | GPIO_CRH_MODE13_1 | GPIO_CRH_MODE13_0);
+//	GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+
 //  настраиваем LED как выход (push/pull out speed 2MHz) RM p.160
-	GPIOC->CRH |= GPIO_CRH_MODE13_1;
+//	GPIOC->CRH |= GPIO_CRH_MODE13_1;
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;  //  использовать выводы PC8 и PC9
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;    //  на выход
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+
 }
 
 void buttons_init(void)
 // В этой инициализируем кнопки 1-4
 {
 	// Включаем тактирование недостающих портов А и В (C уже включен)
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN; //  | RCC_APB2ENR_IOPCEN;
+	//RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN; //  | RCC_APB2ENR_IOPCEN;
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
 	// сброс состояний портов
-	GPIOC->CRH &=~(GPIO_CRH_CNF14_1 | GPIO_CRH_CNF14_0 | GPIO_CRH_MODE14_1 | GPIO_CRH_MODE14_0 |
-							  //
-				   GPIO_CRH_CNF15_1 | GPIO_CRH_CNF15_0 | GPIO_CRH_MODE15_1 | GPIO_CRH_MODE15_0);
-	//
-	GPIOA->CRL &=~(GPIO_CRL_CNF4_1 | GPIO_CRL_CNF4_0 | GPIO_CRL_MODE4_1 | GPIO_CRL_MODE4_0 |
-
-					GPIO_CRL_CNF7_1 | GPIO_CRL_CNF7_0 | GPIO_CRL_MODE7_1 | GPIO_CRL_MODE7_0);
+//	GPIOC->CRH &=~(GPIO_CRH_CNF14_1 | GPIO_CRH_CNF14_0 | GPIO_CRH_MODE14_1 | GPIO_CRH_MODE14_0 |
+//							  //
+//				   GPIO_CRH_CNF15_1 | GPIO_CRH_CNF15_0 | GPIO_CRH_MODE15_1 | GPIO_CRH_MODE15_0);
+//	//
+//	GPIOA->CRL &=~(GPIO_CRL_CNF4_1 | GPIO_CRL_CNF4_0 | GPIO_CRL_MODE4_1 | GPIO_CRL_MODE4_0 |
+//
+//					GPIO_CRL_CNF7_1 | GPIO_CRL_CNF7_0 | GPIO_CRL_MODE7_1 | GPIO_CRL_MODE7_0);
 
 	// Настройка кнопки 3, как вход с подтяжкой к земле
-	GPIOA->CRL |= GPIO_CRL_CNF7_1;
-	GPIOA->ODR &=~GPIO_ODR_ODR7; //
+//		GPIOA->CRL |= GPIO_CRL_CNF7_1;
+//		GPIOA->ODR &=~GPIO_ODR_ODR7;
+
+	GPIO_InitTypeDef GPIO_InitStructure_button3;
+			GPIO_InitStructure_button3.GPIO_Speed = GPIO_Speed_2MHz;
+			GPIO_InitStructure_button3.GPIO_Pin = GPIO_Pin_7;  //
+			GPIO_InitStructure_button3.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_Init(GPIOA, &GPIO_InitStructure_button3);
+
+	 //
 	// Настройка кнопки 1,2,4, как вход с подтяжкой к плюсу
-	GPIOC->CRH |= GPIO_CRH_CNF14_1;
-	GPIOC->ODR |= GPIO_ODR_ODR14; //кнопка 1
+//	GPIOC->CRH |= GPIO_CRH_CNF14_1;
+//	GPIOC->ODR |= GPIO_ODR_ODR14; //кнопка 1
+
+	GPIO_InitTypeDef GPIO_InitStructure_button1;
+			GPIO_InitStructure_button1.GPIO_Speed = GPIO_Speed_2MHz;
+			GPIO_InitStructure_button1.GPIO_Pin = GPIO_Pin_14;  //
+			GPIO_InitStructure_button1.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOC, &GPIO_InitStructure_button1);
+
+
+//	GPIOA->CRL |= GPIO_CRL_CNF4_1;
+//	GPIOA->ODR |= GPIO_ODR_ODR4; //кнопка 2
 	//
-	GPIOA->CRL |= GPIO_CRL_CNF4_1;
-	GPIOA->ODR |= GPIO_ODR_ODR4; //кнопка 2
-	//
-	GPIOC->CRH |= GPIO_CRH_CNF15_1;
-	GPIOC->ODR |= GPIO_ODR_ODR15; //кнопка 4
+
+	GPIO_InitTypeDef GPIO_InitStructure_button2;
+				GPIO_InitStructure_button2.GPIO_Speed = GPIO_Speed_2MHz;
+				GPIO_InitStructure_button2.GPIO_Pin = GPIO_Pin_4;  //
+				GPIO_InitStructure_button2.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOA, &GPIO_InitStructure_button2);
+
+
+//	GPIOC->CRH |= GPIO_CRH_CNF15_1;
+//	GPIOC->ODR |= GPIO_ODR_ODR15; //кнопка 4
+
+	GPIO_InitTypeDef GPIO_InitStructure_button4;
+					GPIO_InitStructure_button4.GPIO_Speed = GPIO_Speed_2MHz;
+					GPIO_InitStructure_button4.GPIO_Pin = GPIO_Pin_15;  //
+					GPIO_InitStructure_button4.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_Init(GPIOC, &GPIO_InitStructure_button4);
 }
 
 
