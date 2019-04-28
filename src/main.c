@@ -56,15 +56,15 @@ int main(void)
 			last_state = curr_state;
 		}
 // установка времени горения в зависимости от кнопки
-	if ((GPIOA->IDR & GPIO_IDR_IDR4)==0)
+	if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_4)==0)
 		{
 		timer_pause=IN_MS_TO_POPUGAIS(1000);
 		}
-	else if ((GPIOA->IDR & GPIO_IDR_IDR7)!=0)
+	else if (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_7)!=0)
 		{
 		timer_pause=IN_MS_TO_POPUGAIS(1500);
 		}
-	else if ((GPIOC->IDR & GPIO_IDR_IDR15)==0)
+	else if (GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_15)==0)
 		{
 		timer_pause=IN_MS_TO_POPUGAIS(2000);
 		}
