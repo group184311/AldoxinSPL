@@ -16,33 +16,43 @@ int main(void)
 	buttons_init(); //Инициализируем кнопки 1-4
 	timer_init();   //Инициализируем таймер 3
 
-	uint32_t last_state = GPIOC->IDR & GPIO_IDR_IDR14;
+	//uint32_t last_state = GPIOC->IDR & GPIO_IDR_IDR14;
+	uint32_t last_state = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_14);
 
 	for(;;)
 	{
-		uint32_t curr_state = GPIOC->IDR & GPIO_IDR_IDR14; //cчитываем логическое состояние вывода 14
+		//uint32_t curr_state = GPIOC->IDR & GPIO_IDR_IDR14; //cчитываем логическое состояние вывода 14
+		uint32_t curr_state = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_14);
+
 
 		if (curr_state != last_state)  //если произошла смена состояния
 		{
-			TIM3->CR1 &= ~TIM_CR1_CEN; // остановаить отсчет
-			GPIOC->ODR |= GPIO_ODR_ODR13; //выключить диод
+//			TIM3->CR1 &= ~TIM_CR1_CEN; // остановаить отсчет
+//			GPIOC->ODR |= GPIO_ODR_ODR13; //выключить диод
+
+			TIM_Cmd(TIM3, DISABLE);
+			GPIO_WriteBit(GPIOC, GPIO_Pin_13, Bit_SET);
+
 			if (curr_state == 0) //если кнопка нажата
 			{
 				TIM3->ARR = UINT16_MAX; // устанавливаем  максимальное значение таймера
 			}
 			else
 			{
-				if (TIM3->CNT >= IN_MS_TO_POPUGAIS(100)) //если счетчик проходит фильтр
+				if (TIM_GetCounter(TIM3) >= IN_MS_TO_POPUGAIS(100)) //если счетчик проходит фильтр
 				{
-					timer_com = TIM3->CNT; // время коммутации приравнивем счетчику таймера
+					timer_com = TIM_GetCounter(TIM3); // время коммутации приравнивем счетчику таймера
 				}
 
-				TIM3->ARR = timer_com; // максимальное значение таймера приравниваем к времени горения диода
+				//TIM3->ARR = timer_com; // максимальное значение таймера приравниваем к времени горения диода
+				TIM_SetAutoreload(TIM3,timer_com);
 			}
-			TIM3->CNT = 0; // обнулить счетчик
+//			TIM3->CNT = 0; // обнулить счетчик
+//
+//			TIM3->CR1 |= TIM_CR1_CEN; // начать отсчет
 
-			TIM3->CR1 |= TIM_CR1_CEN; // начать отсчет
-
+			TIM_SetCounter(TIM3,0);
+			TIM_Cmd(TIM3, ENABLE);
 			last_state = curr_state;
 		}
 // установка времени горения в зависимости от кнопки
@@ -174,14 +184,35 @@ void timer_init(void)
 //инициализация таймера 3
 {
 //  Включаем тактирование
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+//	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);
+
+	TIM_TimeBaseInitTypeDef timer;
+		timer.TIM_ClockDivision=TIM_CKD_DIV1;
+		timer.TIM_CounterMode = TIM_CounterMode_Up;
+		timer.TIM_Prescaler=36000-1;
+		timer.TIM_Period=1000-1;
+	TIM_TimeBaseInit(TIM3, &timer);
+
 //  Разрешаем прерывания по переполнению таймера
-	TIM3->DIER |= TIM_DIER_UIE; // Update  Interrupt Enable
+//	TIM3->DIER |= TIM_DIER_UIE; // Update  Interrupt Enable
+	TIM_ITConfig(TIM3, TIM_IT_Update,ENABLE);
+
 //  Включение прерывания таймера
-	NVIC_EnableIRQ(TIM3_IRQn);
+//	NVIC_EnableIRQ(TIM3_IRQn);
 //  Запускаем таймер 3 на тактовой частоте в 1 kHz
-	TIM3->PSC = 36000 - 1;
+//	TIM3->PSC = 36000 - 1;
 //  Период - 1000 тактов => 1000/1000 = 1 Hz
-	TIM3->ARR = 1000 - 1;
-	TIM3->CR1 |= TIM_CR1_CEN; // Start count
+//	TIM3->ARR = 1000 - 1;
+//	TIM3->CR1 |= TIM_CR1_CEN; // Start count
+
+	NVIC_InitTypeDef nvicInit;
+			nvicInit.NVIC_IRQChannel = TIM3_IRQn;
+			nvicInit.NVIC_IRQChannelCmd = ENABLE;
+			nvicInit.NVIC_IRQChannelPreemptionPriority = 0;
+			nvicInit.NVIC_IRQChannelSubPriority = 0;
+	NVIC_Init(&nvicInit);
+
+		TIM_Cmd(TIM3, ENABLE);
+
 }
